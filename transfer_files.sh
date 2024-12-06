@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Define the username and new password
+# Define the username and password
 USERNAME="user"
-NEW_PASSWORD="1"
+PASSWORD="1"
 
 # List of IP addresses (excluding 172.16.6.122)
 IP_ADDRESSES=(
@@ -13,16 +13,23 @@ IP_ADDRESSES=(
   # Add more IPs as needed
 )
 
-# Loop through each IP and set the password
+# Loop through each IP and execute a command
 for IP in "${IP_ADDRESSES[@]}"; do
-  echo "Setting password for $USERNAME on $IP..."
+  echo "Logging in to $IP..."
   
-  # Use sshpass to log in and set the password
-  sshpass -p "1" ssh -o StrictHostKeyChecking=no root@$IP "echo -e \"$NEW_PASSWORD\n$NEW_PASSWORD\" | passwd $USERNAME"
+  # Use expect to log in and execute a command
+  /usr/bin/expect <<EOF
+  spawn ssh -o StrictHostKeyChecking=no $USERNAME@$IP
+  expect "password:"
+  send "$PASSWORD\r"
+  expect "$USERNAME@"
+  send "echo 'Logged in successfully'\r"
+  expect eof
+EOF
   
   if [ $? -eq 0 ]; then
-    echo "Password for $USERNAME on $IP set successfully."
+    echo "Logged in to $IP successfully."
   else
-    echo "Failed to set password on $IP."
+    echo "Failed to log in to $IP."
   fi
 done
